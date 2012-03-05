@@ -1,0 +1,5 @@
+Stupid little script to scrape a feed using facebook graph api.
+Iterates the entire feed, 100 at a time, until the paging is done.
+
+You need to edit the ACCESS_TOKEN and GRAPH_ID before it works.
+Also if your access token expires, it currently behaves badly.
