@@ -11,8 +11,12 @@ import pickle
 print "Edit GRAPH_ID and ACCESS_TOKEN first"
 sys.exit(1)
 
+#run this script with argument 'refresh' to build the pickle
+#otherwise will render html as a cgi
+
 GRAPH_ID = 'FIXME'
 ACCESS_TOKEN = 'FIXME'
+LINK_REGEX = '(?:mixcloud|soundcloud|youtu.be|youtube)'
 MAIN_URL = 'https://graph.facebook.com/%s/feed?limit=100&access_token=%s' % (GRAPH_ID,ACCESS_TOKEN)
 PICKLE_FILE = '%s/fbscrape.pickle' % '/var/tmp'
 
@@ -71,7 +75,7 @@ def do_html(data):
     for link in links:
         icon = link[0]
         url = link[1]
-        re_music = re.compile('(?:mixcloud|soundcloud|youtu.be|youtube)')
+        re_music = re.compile(LINK_REGEX)
         skipped = list()
         if re_music.search(url):
             #found an interesting url
