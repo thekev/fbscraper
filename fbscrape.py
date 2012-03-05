@@ -21,6 +21,7 @@ MAIN_URL = 'https://graph.facebook.com/%s/feed?limit=100&access_token=%s' % (GRA
 PICKLE_FILE = '%s/fbscrape.pickle' % '/var/tmp'
 
 pp = pprint.PrettyPrinter(indent=4)
+re_link = re.compile('(https*://\S+)')
 
 def parse_graph(url):
     retries = 5
@@ -47,48 +48,52 @@ def poll_facebook(url):
         g = parse_graph(g['paging']['next'])
         posts = posts + g['data']
 
-    re_link = re.compile('(https*://\S+)')
     for post in posts:
-        #TODO show created_time in posts and comments
         #posts may have a link attribute - they're smarter than comments?
         if 'link' in post:
             icon = 'picture' in post and post['picture'] or None
-            links.append( [icon, post['link']] )
-        #apparently, sometimes the count key lies, so check for data key's existance instead
+            links.append( [post['link'], icon, post['created_time']] )
         if 'data' in post['comments']:
             for comment_data in post['comments']['data']:
-                #comments appear to only have a message key, even if message contains a link
-                m = re_link.search(comment_data['message'])
+                m = re_link.match(comment_data['message'])
                 if m:
                     icon = 'picture' in comment_data and comment_data['picture'] or None
-                    links.append( [icon, m.group(1)] )
-    return { 'links': links, 'posts': posts, 'timestamp': time.time() }
+                    links.append( [m.group(1), icon, comment_data['created_time']] )
+    return { 'posts': len(posts), 'links': links, 'timestamp': time.time() }
+
 
 def do_html(data):
     links = data['links']
     posts = data['posts']
-    timedelta = time.time() - data['timestamp']
+    now = time.time()
+    timedelta = now - data['timestamp']
     print "Content-type: text/html\n"
     print "<html><body>"
-    print "<p>posts evaluated: %d<br />" % len(posts)
+    print "<p>posts evaluated: %d<br />" % posts
     print "last evaluation: %d seconds ago</p>" % timedelta
     for link in links:
-        icon = link[0]
-        url = link[1]
+        url = link[0]
+        icon = link[1]
+        created_time = link[2]
         re_music = re.compile(LINK_REGEX)
         skipped = list()
         if re_music.search(url):
             #found an interesting url
+            print '<div width="100%" style="border-top-style: solid; border-top-width: 1px; border-top-color: silver;">'
+            print '<span>'
             if icon is not None:
-                print '<a href="%(url)s"><img src="%(icon)s" />%(url)s</a><hr />' % { 'url': url, 'icon': icon }
+                print '<img src="%s" style="vertical-align: text-top; width: 80px; height: 60px;" />' % icon
             else:
-                print '<a href="%(url)s">%(url)s</a><hr />' % { 'url': url }
+                print '<span style="width: 80px; display: inline-block; height: 60px;">&nbsp;</span>'
+            print '<a href="%s">%s</a></span>' % (url,url)
+            print '<span style="float: right;">%s</span>' % created_time 
+            print '</div>'
         else:
            skipped.append([icon,url])
     
     print "<p>links deemed non-interesting:<br />"
     for skip in skipped:
-        print '<a href="%(url)s"><img src="%(icon)s">%(url)s</a><br />' % { 'url': url, 'icon': icon }
+        print '<a href="%(url)s"><img src="%(icon)s">%(url)s</a><br />' % { 'url': url, 'icon': icon, 'time': created_time }
     print "</p>"
     print "</body></html>"
 
