@@ -22,6 +22,9 @@ PICKLE_FILE = '%s/fbscrape.pickle' % '/var/tmp'
 
 pp = pprint.PrettyPrinter(indent=4)
 re_link = re.compile('(https*://\S+)')
+re_embedlink = re.compile('(https*%3A%2F%2F(?:[^\&]|$)+)')
+re_ytid = re.compile('(?:youtu\.be/|youtube.com/watch\?v=|youtube.com/embed/)([\w_-]+)')
+
 
 def parse_graph(url):
     retries = 5
@@ -59,6 +62,11 @@ def poll_facebook(url):
                 if m:
                     icon = 'picture' in comment_data and comment_data['picture'] or None
                     links.append( [m.group(1), icon, comment_data['created_time']] )
+    #find any embedded links and unquote them
+    for link in links:
+        m = re_embedlink.search(link[0])
+        if m:
+            link[0] = urllib2.unquote(m.group(1))
     return { 'posts': len(posts), 'links': links, 'timestamp': time.time() }
 
 
@@ -81,6 +89,11 @@ def do_html(data):
             #found an interesting url
             print '<div width="100%" style="border-top-style: solid; border-top-width: 1px; border-top-color: silver;">'
             print '<span>'
+            #get a fresh icon for any youtube links
+            m = re_ytid.search(url)
+            if m:
+                id = m.group(1)
+                icon = 'http://img.youtube.com/vi/%s/2.jpg' % id
             if icon is not None:
                 print '<img src="%s" style="vertical-align: text-top; width: 80px; height: 60px;" />' % icon
             else:
