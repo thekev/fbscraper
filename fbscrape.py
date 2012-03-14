@@ -145,7 +145,7 @@ def do_html(data):
     listidx = 1
     print '<p style="background-color: silver;">'
     for listid in YT_PLAYLISTS:
-        print '<a href="%s"><strong>Playlist %d</strong></a><br />' % (YT_PLAYLIST_MAIN % listid, listidx)
+        print '<a href="%s" target="_blank"><strong>Playlist %d</strong></a><br />' % (YT_PLAYLIST_MAIN % listid, listidx)
         listidx += 1
     print '</p><br /><br /><br />Individual songs:<br />'
     for link in links:
@@ -163,7 +163,7 @@ def do_html(data):
                 print '<img src="%s" style="vertical-align: text-top; width: 80px; height: 60px;" />' % icon
             else:
                 print '<span style="width: 80px; display: inline-block; height: 60px;">&nbsp;</span>'
-            print '<a href="%s">%s</a> - %s</span>' % (url,url,title)
+            print '<a href="%s" target="_blank">%s</a> - %s</span>' % (url,url,title)
             if 'filename' in link:
                 realfile = re.sub('"', '%22', '%s.%s' % ( title,link['filename'].split('.')[-1] ))
                 print '<span><a href="/ps20dl/%s?filename=%s">Download</a></span>' % (link['filename'],realfile)
